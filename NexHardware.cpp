@@ -18,6 +18,7 @@
 #define NEX_RET_EVENT_LAUNCHED          (0x88)
 #define NEX_RET_EVENT_UPGRADED          (0x89)
 #define NEX_RET_EVENT_TOUCH_HEAD            (0x65)     
+#define NEX_RET_EVENT_SENDME            (0x66)  
 #define NEX_RET_EVENT_POSITION_HEAD         (0x67)
 #define NEX_RET_EVENT_SLEEP_POSITION_HEAD   (0x68)
 #define NEX_RET_CURRENT_PAGE_ID_HEAD        (0x66)
@@ -232,7 +233,7 @@ bool nexInit(void)
     return ret1 && ret2;
 }
 
-void nexLoop(NexTouch *nex_listen_list[])
+void nexLoop(NexTouch *nex_listen_list[], NexTouch *page_listen_list[])
 {
     static uint8_t __buffer[10];
     
@@ -244,20 +245,33 @@ void nexLoop(NexTouch *nex_listen_list[])
         delay(10);
         c = nexSerial.read();
         
-        if (NEX_RET_EVENT_TOUCH_HEAD == c)
+        if (NEX_RET_EVENT_TOUCH_HEAD == c || NEX_RET_EVENT_SENDME == c)
         {
-            if (nexSerial.available() >= 6)
+            int n_bytes=5;
+
+            if (NEX_RET_EVENT_SENDME == c){ 
+                n_bytes = 4;
+            }
+            
+            if (NEX_RET_EVENT_TOUCH_HEAD == c){ 
+                n_bytes = 6;
+            }
+            
+            if (nexSerial.available() >= n_bytes)
             {
                 __buffer[0] = c;  
-                for (i = 1; i < 7; i++)
+                for (i = 1; i <= n_bytes; i++)
                 {
                     __buffer[i] = nexSerial.read();
                 }
                 __buffer[i] = 0x00;
                 
-                if (0xFF == __buffer[4] && 0xFF == __buffer[5] && 0xFF == __buffer[6])
+                if (NEX_RET_EVENT_TOUCH_HEAD == c && 0xFF == __buffer[4] && 0xFF == __buffer[5] && 0xFF == __buffer[6])
                 {
                     NexTouch::iterate(nex_listen_list, __buffer[1], __buffer[2], (int32_t)__buffer[3]);
+                }
+                else if (NEX_RET_EVENT_SENDME == c  && 0xFF == __buffer[2] && 0xFF == __buffer[3] && 0xFF == __buffer[4]){ 
+                    NexTouch::iterate(page_listen_list, __buffer[1]);
                 }
                 
             }

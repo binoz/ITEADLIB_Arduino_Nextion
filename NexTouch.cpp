@@ -93,3 +93,39 @@ void NexTouch::iterate(NexTouch **list, uint8_t pid, uint8_t cid, int32_t event)
     }
 }
 
+void NexTouch::attachLoad(NexPageLoadCb load, void *ptr)
+{
+    this->__cb_load = load;
+    this->__cbload_ptr = ptr;
+}
+
+void NexTouch::load(void)
+{
+    if (__cb_load){
+        __cb_load(__cbload_ptr);
+    }
+    
+}
+
+void NexTouch::iterate(NexTouch **list, uint8_t pid)
+{
+    NexTouch *e = NULL;
+    uint16_t i = 0;
+
+    if (NULL == list)
+    {
+        return;
+    }
+    
+    for(i = 0; (e = list[i]) != NULL; i++)
+    {
+        if (e->getObjPid() == pid)
+        {
+            e->printObjInfo();
+            e->load();
+            
+            break;
+        }
+    }
+}
+

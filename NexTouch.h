@@ -43,6 +43,7 @@
  * @return none. 
  */
 typedef void (*NexTouchEventCb)(void *ptr);
+typedef void (*NexPageLoadCb)(void *ptr);
 
 /**
  * Father class of the components with touch events.  
@@ -54,6 +55,7 @@ class NexTouch: public NexObject
 {
 public: /* static methods */    
     static void iterate(NexTouch **list, uint8_t pid, uint8_t cid, int32_t event);
+    static void iterate(NexTouch **list, uint8_t pid);
 
 public: /* methods */
 
@@ -97,6 +99,8 @@ public: /* methods */
      * @return none. 
      */
     void detachPop(void);
+
+    void attachLoad(NexPageLoadCb load, void *ptr = NULL);
     
 private: /* methods */ 
     void push(void);
@@ -107,6 +111,9 @@ private: /* data */
     void *__cbpush_ptr;
     NexTouchEventCb __cb_pop;
     void *__cbpop_ptr;
+    NexPageLoadCb __cb_load;
+    void *__cbload_ptr;
+    void load();
 };
 
 /**
